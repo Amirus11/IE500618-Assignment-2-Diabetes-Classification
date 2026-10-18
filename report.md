@@ -35,6 +35,8 @@ The CSV alone is not enough to understand these features. Every value is stored 
 4. **BMI.** The median is 31 for class 1 and 27 for class 0, so the whole distribution is shifted upward for people with diabetes.
 5. **Income and education show a socioeconomic gradient.** The diabetes share falls from about 24–26 % at the lowest income levels to 8 % at the highest. Education shows a similar fall, from about 27–29 % to 9.7 %.
 
+We also combined the four chronic conditions (HighBP, HighChol, Stroke, HeartDiseaseorAttack) into one count, `ChronicCount`. The diabetes share rises steeply with each extra condition: 3.7 % with none, 12.2 %, 26.6 %, 36.3 % and 47.7 % with all four (TRAIN only). Its correlation with the target (0.31) is higher than that of any single feature.
+
 We also observed that MentHlth and PhysHlth are heavily concentrated at 0 days (69 % and 63 % of rows). AnyHealthcare, Sex, NoDocbcCost, Fruits and Veggies show very weak relationships with the target (|r| < 0.07). CholCheck is extremely unbalanced: 96 % of people had a cholesterol check.
 
 **What we can conclude:** in this survey these features are *associated* with diabetes, and they are likely to be useful predictors for the model.
@@ -57,10 +59,10 @@ Confusion matrix on TEST (n = 50,736) using `model.predict()`, i.e. the default 
 
 | | Predicted 0 | Predicted 1 |
 |---|---|---|
-| **True 0** | TN = 31,739 | FP = 11,928 |
+| **True 0** | TN = 31,743 | FP = 11,924 |
 | **True 1** | FN = 1,689 | TP = 5,380 |
 
-- **False positive (11,928):** the model flags a person without diabetes as having it. The consequence is unnecessary worry and follow-up tests, but a blood test would clear it up.
+- **False positive (11,924):** the model flags a person without diabetes as having it. The consequence is unnecessary worry and follow-up tests, but a blood test would clear it up.
 - **False negative (1,689):** the model misses a person who has diabetes. This is usually more serious: the condition goes undiagnosed and untreated, with a risk of complications.
 
 | Metric | Value | Meaning |
@@ -80,13 +82,13 @@ Accuracy alone isn't enough because of the class imbalance. Always predicting 0 
 
 | Threshold | Accuracy | Precision | Recall | F1 | False positives | False negatives |
 |---|---|---|---|---|---|---|
-| 0.50 | 0.732 | 0.311 | 0.761 | 0.441 | 11,928 | 1,689 |
-| 0.40 | 0.665 | 0.274 | 0.854 | 0.415 | 15,979 | 1,033 |
+| 0.50 | 0.732 | 0.311 | 0.761 | 0.441 | 11,924 | 1,689 |
+| 0.40 | 0.665 | 0.274 | 0.854 | 0.415 | 15,986 | 1,034 |
 
 Lowering the threshold from 0.50 to 0.40 means more people are classified as class 1. As a result:
 
-- **False positives increased** by 4,051 (11,928 → 15,979).
-- **False negatives decreased** by 656 (1,689 → 1,033).
+- **False positives increased** by 4,062 (11,924 → 15,986).
+- **False negatives decreased** by 655 (1,689 → 1,034).
 - **Recall increased** (0.761 → 0.854): we find more of the people who actually have diabetes.
 - **Precision decreased** (0.311 → 0.274): a larger share of the positive predictions are false alarms.
 
@@ -100,7 +102,7 @@ Accuracy (0.732 → 0.665) and F1 (0.441 → 0.415) also dropped, because most o
 
 The EDA showed that general health, age, high blood pressure, high cholesterol, BMI, difficulty walking and income are the features most strongly associated with diabetes. Several lifestyle features (fruits, vegetables, smoking) and healthcare access showed only weak relationships.
 
-Logistic Regression ranks people reasonably well (ROC-AUC 0.82), but because of the class imbalance it can't get both high precision and high recall at once. The threshold is a trade-off decision. For screening, a lower threshold (higher recall) makes sense because missing a person with diabetes is usually costlier than a false alarm.
+Logistic Regression ranks people reasonably well (ROC-AUC 0.82), but because of the class imbalance it can't get both high precision and high recall at once. The threshold is a trade-off decision. Adding `ChronicCount` left the results practically unchanged (ROC-AUC 0.8196 with and without it). Logistic Regression already learns its own weight for each of the four conditions, so a sum of them with every weight set to 1 gives the model no new information. A strong correlation with the target does not mean a feature improves a linear model that already contains its parts. We kept it because it describes the EDA pattern clearly, not because it improves the predictions. For screening, a lower threshold (higher recall) makes sense because missing a person with diabetes is usually costlier than a false alarm.
 
 **Limitations:**
 
